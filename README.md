@@ -22,4 +22,4 @@ see https://github.com/tangible-landscape/grass-tangible-landscape/blob/master/R
 5.  From the gui click "turn on watch mode"
 6.  For testing the functionality copy the point.ply from sample_data folder to the Watch folder. You should be able to see the geometry changed. 
 
-![Immersive extension GUI](https://github.com/tangible-landscape/tangible-landscape-immersive-extension/blob/master/blob/blender_gui.PNG)
+![Immersive extension GUI](https://github.com/tangible-landscape/tangible-landscape-immersive-extension/blob/master/blob/blender_gui_1.PNG)
