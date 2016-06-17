@@ -882,7 +882,7 @@ class mainPanel(bpy.types.Panel):
  
     def draw(self, context):
         
-        self.layout.operator("wm.modal_timer_operator", text="Turn on Watch Mode", icon="GHOST_ENABLED")
+        self.layout.operator("wm.file_listener", text="Turn on Watch Mode", icon="GHOST_ENABLED")
         self.layout.operator("screen.animation_play",text="Play / Stop animation", icon="ANIM"  )
         self.layout.operator("wm.switchvisibility",text=" PointCloud / Terrain", icon="TEXTURE" )
         self.layout.operator("wm.colorramp",text=" Height map / Aspect ", icon="COLOR")
