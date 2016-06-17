@@ -15,11 +15,12 @@ see https://github.com/tangible-landscape/grass-tangible-landscape/blob/master/R
 
 1.  Install Blender 2.77 (more stable on 32 bit built)
 2.  Install Blender virtual_reality_viewport addon 
-3.  Install and activate BlenderGIS addon 
-4.  Open immersive_extention.blend in blender 
-5.  Activate both of the installed addons in Blender-preferences-addon menu
-4.  Load and run the immersive_extension.py in blender scripting environment . You should be able to see the Tangible Landscape gui on the 3d view toolbar 
-5.  From the gui click "turn on watch mode"
-6.  For testing the functionality copy the point.ply from sample_data folder to the Watch folder. You should be able to see the geometry changed. 
+3.  Install BlenderGIS addon 
+4.  Download the repository into a new folder and run blender
+5.  Open immersive_extention.blend in blender 
+6.  Activate both of the installed addons in Blender-preferences-addon menu
+7.  Load and run the immersive_extension.py in blender scripting environment . You should be able to see the Tangible Landscape gui on the 3d view toolbar 
+8.  From the gui click "turn on watch mode"
+9.  For testing the functionality copy the point.ply from sample_data folder to the Watch folder. You should be able to see the geometry changed. 
 
 ![Immersive extension GUI](https://github.com/tangible-landscape/tangible-landscape-immersive-extension/blob/master/blob/blender_gui_1.PNG)
