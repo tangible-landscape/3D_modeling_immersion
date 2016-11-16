@@ -5,7 +5,7 @@ Tangible Landscape is a tangible interface for geographic information systems (G
 Since it only affords a bird's-eye view of the landscape, we coupled it with an immersive virtual environment so that users can virtually walk around the modeled landscape and visualize it at a human-scale. Now as users shape topography, draw trees, define viewpoints, or route a walkthrough they can see the results on the projection-augmented model, rendered on a display, or rendered on a head-mounted display.
 
 ## Dependencies
--   Blender 2.77 (https://www.blender.org/download/)
+-   Blender (https://www.blender.org/download/)
 -   Blender virtual_reality_viewport addon (https://github.com/dfelinto/virtual_reality_viewport)
 -   BlenderGIS addon (https://github.com/domlysz/BlenderGIS)
 
@@ -13,7 +13,7 @@ Since it only affords a bird's-eye view of the landscape, we coupled it with an 
 Note : Tangible Landscape should be setup and installed before installing the extension.
 see https://github.com/tangible-landscape/grass-tangible-landscape/blob/master/README.md
 
-1.  Install Blender 2.77 (more stable on 32 bit built)
+1.  Most recent Blender build 
 2.  Install Blender virtual_reality_viewport addon 
 3.  Install BlenderGIS addon 
 4.  Download the repository into a new folder and run blender
