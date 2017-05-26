@@ -56,7 +56,6 @@ waterFile = "water.tif"
 emptyFile = "empty.txt"
 CRS = "EPSG:3358"
 
-Mode = "BLENDER_RENDER"
 
 
 watchFolder = os.path.dirname(bpy.path.abspath("//")) + "/" + watchName
@@ -118,68 +117,39 @@ def addSide(objName,mat):
         elif vert.co[1] < ymax + tres and vert.co[1] > ymax-tres:
             vert.select = True
             vert.co[2] = -50
+    #bpy.ops.transform.translate(value=(0, 0, -100), constraint_axis=(False, False, True), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SHARP', proportional_size=45.2593)
       
     bmesh.update_edit_mesh(me, True)
     
-def changeEngine(mode):
+    def NormalInDirection( normal, direction, limit = .5):
+        return direction.dot( normal ) > limit
+    
+    def GoingUp( normal, limit = .5):
+        return NormalInDirection( normal, Vector( (0, 0, 1 ) ), limit )
+    
+    def GoingDown( normal, limit = .5 ):
+        return NormalInDirection( normal, Vector( (0, 0, -1 ) ), limit )
+    
+    def GoingSide( normal, limit = .2 ):
+        return ( GoingUp( normal, limit ) == False and 
+        GoingDown( normal, limit ) == False )
+    
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    
+    #Selects faces going side
+    
+    for face in ter.data.polygons:
+        face.select = GoingSide(face.normal)
+    
+    bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+    
 
-    engine = bpy.context.scene.render.engine
+    changeMat(objName,mat,2)
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
-    # Change materials #
-    if mode != engine:
-        for obj in bpy.data.objects:
-
-            for index, mat in enumerate(obj.material_slots):
-                if not obj.hide:
-                    if (mat.name.split(".")[0] == engine[0] and
-                            "cube" not in obj.name):
-                        newMat = mode[0] + "." + mat.name.split(".")[1]
-                        mat = bpy.data.materials.get(newMat)
-                        obj.data.materials[index] = mat
-
-    if mode != engine:
-            for lamp in bpy.data.lamps:
-                lampInd = lamp.name.split(".")[0]
-                print (lampInd)
-                                
-                if lampInd == engine[0] or lampInd == mode[0]:
-                    newLampName = mode[0] + lamp.name[1:]
-                    if newLampName in bpy.data.lamps:
-                        newLamp = bpy.data.objects[newLampName]
-                        oldLamp = bpy.data.objects[lamp.name]
-                        oldLamp.layers[0] = False
-                        oldLamp.layers[3] = True
-                        newLamp.layers[0] = True
-
-    # Change rendere engine #
-    if mode != engine:
-        bpy.context.scene.render.engine = mode
-
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                for space in area.spaces:
-                    if space.type == 'VIEW_3D':
-                        if mode == "CYCLES":
-
-                            bpy.context.scene.world.active_texture_index = 0
-                            space.viewport_shade = 'RENDERED'
-                        else:
-                            bpy.context.scene.world.active_texture_index = 1
-                            space.viewport_shade = 'MATERIAL'
-    Mode = mode
+    
 
 
-
-def changeRealism(mode):
-
-      for obj in bpy.data.objects:
-            if "patch_" in obj.name:
-                if obj.particle_systems:
-                    setting= obj.particle_systems[0].settings         
-                    newParticle= mode + "_" + obj.name.split("_")[1]
-                    setting.dupli_object = bpy.data.objects[newParticle]
-                             
-      Realism = mode
 
 
 
@@ -553,7 +523,7 @@ def subdivide(cutNo):
 
 class adapt:
     
-    realism="High"
+    realism = "High"
     
     def __init__(self):
 
@@ -568,6 +538,7 @@ class adapt:
         self.humanCamera = "Camera"
         self.humanTarg = "HumanCamTarg"
         
+        
         self.vantage = "vantage"
         self.vantagetxt = "vantage.txt"
         self.target = "camtarget"
@@ -576,11 +547,88 @@ class adapt:
         self.scene = bpy.context.scene
         self.engine = bpy.context.scene.render.engine
 
-        
+        self.clouds = bpy.data.objects["Clouds"]
+        self.sun = bpy.data.objects["Sun"]
     
-#    def self.render(self, mode):
-#        realism = mode
-#        return realism
+
+    def changeEngine(self, mode, real = realism):
+
+        # Change materials #
+        if mode != self.engine or real != self.realism:
+
+            for obj in bpy.data.objects:
+    
+                for index, mat in enumerate(obj.material_slots):
+                    if not obj.hide:
+ 
+                        if (mat.name.split(".")[0] == self.engine[0] and
+                                "cube" not in obj.name):
+
+                            if self.realism in mat.name:
+                                print (self.realism)
+                                newMatName = (mode[0] + "." + 
+                                mat.name.split(".")[1] + "." + real)
+                                print (newMatName)
+                            else:
+                                newMatName = (mode[0] + "." +
+                                mat.name.split(".")[1])
+                            
+                            mat = bpy.data.materials.get(newMatName)
+                            obj.data.materials[index] = mat
+                                                               
+        if mode != self.engine:
+                for lamp in bpy.data.lamps:
+                    lampInd = lamp.name.split(".")[0]
+                                     
+                    if lampInd == self.engine[0] or lampInd == mode[0]:
+                        newLampName = mode[0] + lamp.name[1:]
+                        if newLampName in bpy.data.lamps:
+                            newLamp = bpy.data.objects[newLampName]
+                            oldLamp = bpy.data.objects[lamp.name]
+                            oldLamp.layers[0] = False
+                            oldLamp.layers[3] = True
+                            newLamp.layers[0] = True
+    
+        # Change rendere engine #
+        if mode != self.engine:
+            bpy.context.scene.render.engine = mode
+    
+            for area in bpy.context.screen.areas:
+                if area.type == 'VIEW_3D':
+                    for space in area.spaces:
+                        if space.type == 'VIEW_3D':
+                            if mode == "CYCLES":
+
+                                bpy.context.scene.world.active_texture_index = 0
+                                space.viewport_shade = 'RENDERED'
+
+                            else:
+                                bpy.context.scene.world.active_texture_index = 1
+                                space.viewport_shade = 'MATERIAL'
+                                
+        world = mode + "_" + real
+        print (world)
+        if bpy.data.worlds.get(world):
+            bpy.context.scene.world = bpy.data.worlds[world]
+
+    def changeRealism(self,mode):
+
+      for obj in bpy.data.objects:
+            if "patch_" in obj.name:
+                if obj.particle_systems:
+                    setting= obj.particle_systems[0].settings         
+                    newParticle= mode + "_" + obj.name.split("_")[1]
+                    setting.dupli_object = bpy.data.objects[newParticle]
+                    
+      if mode == "High":
+          self.clouds.hide = True
+          self.sun.hide = True
+          
+      elif mode == "Low":
+          self.clouds.hide = False
+          self.sun.hide = False
+                                   
+
         
     def terrain(self):
 
@@ -593,10 +641,14 @@ class adapt:
                                         subdivision="mesh", rastCRS=CRS)
             selectOnly(self.plane)
             bpy.ops.object.convert(target="MESH")
-            smooth(self.plane, 3, 1)
-
-            mat = Mode[0] + ".Grass"
-            matSide = Mode[0] + ".Side"
+            # smooth(self.plane, 3, 1)
+            if self.engine == "CYCLES":
+                mat = self.engine[0] + "." + self.realism[0] + "_Grass"
+            else:    
+                mat = "B._Grass"
+             
+            matSide = self.engine + ".Side"
+            
             changeMat(self.plane, mat)
             addSide(self.plane,matSide)
 
@@ -628,7 +680,7 @@ class adapt:
                                         subdivision="mesh", rastCRS=CRS)
             bpy.ops.object.convert(target='MESH')
             bpy.context.object.show_transparent = True
-            mat = Mode[0] + ".Water"
+            mat = self.engine[0] + ".Water"
             changeMat(self.water, mat)
 
             if (int(getTime("sec"))) % 10 == 0:
@@ -921,26 +973,35 @@ class mist(bpy.types.Operator):
 class Engine_button(bpy.types.Operator):
     bl_idname = "render.engine"
     bl_label = "Change render Engine"
-    engine = bpy.props.StringProperty()
+    button = bpy.props.StringProperty()
+
 
     def execute(self, context):
-        if self.engine == "BLENDER_RENDER":
-            changeEngine("BLENDER_RENDER")
-            self.mode = "BLENDER_RENDER"
+        
+        engine = bpy.context.scene.render.engine
+        
+        if self.button == "BLENDER_RENDER":
+            if adapt.realism == "High":
+                adapt().changeEngine("BLENDER_RENDER")
+                self.mode = "BLENDER_RENDER"
 
-        elif self.engine == 'CYCLES':
-            changeEngine("CYCLES")
-            adapt.engine= "CYCLES"            
+        elif self.button == 'CYCLES':
+            adapt().changeEngine("CYCLES")
+            adapt.engine= "CYCLES"         
+                    
+        elif self.button == 'Low':
+            
+            if engine == "CYCLES":
+                adapt().changeEngine(engine,real = 'Low')
+                adapt().changeRealism("Low")
+                adapt.realism = "Low"
 
-        elif self.engine == 'Low':
-            changeRealism("Low")
-            changeEngine("CYCLES")
-            adapt.realism= "Low"
-
-        elif self.engine == 'High':
-            changeRealism("High")
-            changeEngine("BLENDER_RENDER")
+        elif self.button == 'High':
+            
+            adapt().changeEngine(engine,real = 'High')
+            adapt().changeRealism("High")
             adapt.realism = "High"
+            
 
         return{'FINISHED'}
 
@@ -1142,19 +1203,18 @@ class TLGUI(bpy.types.Panel):
         box.label('Rendering and Realism')
         box.alignment = 'CENTER'
         row4 = box.row()
-
         row4.operator("render.engine",
-                      text="Blender renderer").engine = "BLENDER_RENDER"
+                      text="Blender renderer").button = "BLENDER_RENDER"
         row4.operator("render.engine",
-                      text="Cycles renderer").engine = "CYCLES"
+                      text="Cycles renderer").button = "CYCLES"
      
         row5 = box.row()
         row5.label("Realism")
         row6 = box.row()
         row6.operator("render.engine",
-                      text="Low poly Rendering").engine = "Low"
+                      text="Low poly Rendering").button = "Low"
         row6.operator("render.engine",
-                      text="High poly rendering").engine = "High"
+                      text="High poly rendering").button = "High"
 
         layout.row().separator()
 
