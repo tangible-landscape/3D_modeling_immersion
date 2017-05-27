@@ -185,7 +185,8 @@ def shrinkRaster2Obj(obj, target, method="NEAREST_VERTEX",
         bpy.context.object.modifiers["Shrinkwrap"].wrap_method = method
         bpy.context.object.modifiers["Shrinkwrap"].use_keep_above_surface = True
         bpy.context.object.modifiers["Shrinkwrap"].offset = offset
-        bpy.ops.object.modifier_move_up(modifier="Shrinkwrap")
+        while rasterObj.modifiers[0] != rasterObj.modifiers["Shrinkwrap"]:
+            bpy.ops.object.modifier_move_up(modifier="Shrinkwrap")
 
     except:
         print ("""Shrinkwrap Unsuccessfull: either the raster or target
@@ -368,7 +369,7 @@ def toggleCam(camInitial, multiple=True, adaptGrass=False):
             shrinkRaster2Obj("grassPlane", "terrain",
                              method='NEAREST_SURFACEPOINT',
                              offset=0.08, delModifier=True)
-
+                             
         else:
 
             if grassPlane.hide == False:
@@ -523,7 +524,9 @@ def subdivide(cutNo):
 
 class adapt:
     
-    realism = "High"
+    world = bpy.context.scene.world.name
+    realism = world.split(".")[1]
+    engine = bpy.context.scene.render.engine
     
     def __init__(self):
 
@@ -545,7 +548,7 @@ class adapt:
         self.vantageCam = "VantageCam"
         self.camWalk = "Camwalk"
         self.scene = bpy.context.scene
-        self.engine = bpy.context.scene.render.engine
+
 
         self.clouds = bpy.data.objects["Clouds"]
         self.sun = bpy.data.objects["Sun"]
@@ -555,7 +558,7 @@ class adapt:
 
         # Change materials #
         if mode != self.engine or real != self.realism:
-
+            
             for obj in bpy.data.objects:
     
                 for index, mat in enumerate(obj.material_slots):
@@ -577,49 +580,64 @@ class adapt:
                             obj.data.materials[index] = mat
                                                                
         if mode != self.engine:
-                for lamp in bpy.data.lamps:
+                for lamp in bpy.data.lamps: 
                     lampInd = lamp.name.split(".")[0]
-                                     
+                                    
                     if lampInd == self.engine[0] or lampInd == mode[0]:
                         newLampName = mode[0] + lamp.name[1:]
-                        if newLampName in bpy.data.lamps:
+                        if (newLampName in bpy.data.objects and 
+                            not bpy.data.objects[newLampName].hide ):
                             newLamp = bpy.data.objects[newLampName]
                             oldLamp = bpy.data.objects[lamp.name]
                             oldLamp.layers[0] = False
                             oldLamp.layers[3] = True
                             newLamp.layers[0] = True
-    
-        # Change rendere engine #
-        if mode != self.engine:
-            bpy.context.scene.render.engine = mode
-    
-            for area in bpy.context.screen.areas:
-                if area.type == 'VIEW_3D':
-                    for space in area.spaces:
-                        if space.type == 'VIEW_3D':
-                            if mode == "CYCLES":
+                            
+                # Change rendere engine #
+                bpy.context.scene.render.engine = mode
+                self.engine = mode
+                # Change background #
 
-                                bpy.context.scene.world.active_texture_index = 0
-                                space.viewport_shade = 'RENDERED'
+        # Change render mode #
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        if mode == "CYCLES":
 
-                            else:
-                                bpy.context.scene.world.active_texture_index = 1
-                                space.viewport_shade = 'MATERIAL'
-                                
-        world = mode + "_" + real
-        print (world)
-        if bpy.data.worlds.get(world):
-            bpy.context.scene.world = bpy.data.worlds[world]
+                            bpy.context.scene.world.active_texture_index = 0
+                            space.viewport_shade = 'MATERIAL'
+
+                        else:
+                            bpy.context.scene.world.active_texture_index = 1
+                            space.viewport_shade = 'MATERIAL'
+        
+
+    def UpdateWorld(self): 
+        
+        newWorld = self.engine + "." + self.realism       
+        bpy.context.scene.world = bpy.data.worlds[newWorld]
+        self.world= bpy.data.worlds[newWorld]
 
     def changeRealism(self,mode):
+        
+      self.realism = mode
 
       for obj in bpy.data.objects:
             if "patch_" in obj.name:
                 if obj.particle_systems:
-                    setting= obj.particle_systems[0].settings         
-                    newParticle= mode + "_" + obj.name.split("_")[1]
-                    setting.dupli_object = bpy.data.objects[newParticle]
-                    
+                    setting= obj.particle_systems[0].settings
+                    if setting.count== 1:
+                        newParticle= mode + "_" + obj.name.split("_")[1]+ "_single"
+                    else:
+                        newParticle= mode + "_" + obj.name.split("_")[1]
+                        
+                    if setting.render_type == 'GROUP':
+                        setting.dupli_group = bpy.data.groups[newParticle]
+                    else:
+                        setting.dupli_object = bpy.data.objects[newParticle]
+
+               
       if mode == "High":
           self.clouds.hide = True
           self.sun.hide = True
@@ -627,8 +645,8 @@ class adapt:
       elif mode == "Low":
           self.clouds.hide = False
           self.sun.hide = False
-                                   
 
+      self.changeEngine(self.engine,mode)
         
     def terrain(self):
 
@@ -782,21 +800,19 @@ class adapt:
                             area = calcArea(objName)
                             if area < 400:
                                 count = 1
+                                specieType= specieType + "_single"
                             elif area > 400 and area < 900:
                                 count = 2
                             elif area > 900 and area < 1200:
                                 count = 3
                             else:
-                                count = area/300
-
-                            if specieType == "mixed":
+                                count = area/300        
+                            
+                            if specieType == "class3":
                                 particle(objName, specieType,
-                                         count, group=True)
-                            elif specieType == "class3":
-                                particle(objName, specieType,
-                                         area/100, group=False)
+                                         area/100, group=True)
                             else:
-                                particle(objName, specieType, count)
+                                particle(objName, specieType, count, group=True)
                                 
                             makeScratchfile(patchPath, "vector")
                             
@@ -962,7 +978,7 @@ class mist(bpy.types.Operator):
         if not bpy.context.scene.world.mist_settings.use_mist:
             bpy.context.scene.world.mist_settings.use_mist = True
             return {'FINISHED'}
-
+        
         if bpy.context.scene.world.mist_settings.use_mist:
             bpy.context.scene.world.mist_settings.use_mist = False
             return {'FINISHED'}
@@ -970,38 +986,61 @@ class mist(bpy.types.Operator):
 
 
 
-class Engine_button(bpy.types.Operator):
+class Engine_buttons(bpy.types.Operator):
     bl_idname = "render.engine"
     bl_label = "Change render Engine"
-    button = bpy.props.StringProperty()
-
+    engineButton = bpy.props.StringProperty()
 
     def execute(self, context):
         
         engine = bpy.context.scene.render.engine
-        
-        if self.button == "BLENDER_RENDER":
-            if adapt.realism == "High":
-                adapt().changeEngine("BLENDER_RENDER")
-                self.mode = "BLENDER_RENDER"
+        world = bpy.context.scene.world.name
+        realism = world.split(".")[1]
 
-        elif self.button == 'CYCLES':
-            adapt().changeEngine("CYCLES")
-            adapt.engine= "CYCLES"         
-                    
-        elif self.button == 'Low':
+        if self.engineButton == "BLENDER_RENDER":
+
+            if realism == "High" and engine != "BLENDER_RENDER" :
+                adapt().changeEngine("BLENDER_RENDER",real=realism)
+                self.mode = "BLENDER_RENDER"
+                adapt.realism = realism
+                adapt.engine = "BLENDER_RENDER"
+                adapt().UpdateWorld()
+                
+            else:
+                bpy.ops.error.message('INVOKE_DEFAULT', 
+                                      type = "Error",
+                                      message = "Blender renderer can be only used in realistic mode")
+                                      
+        elif self.engineButton == 'CYCLES':
+            
+            if engine != "CYCLES":
+                
+                adapt().changeEngine("CYCLES", real=realism)
+                adapt.engine= "CYCLES"
+                adapt.realism = realism
+                adapt().UpdateWorld()
+
+        elif self.engineButton == 'Low':
             
             if engine == "CYCLES":
                 adapt().changeEngine(engine,real = 'Low')
                 adapt().changeRealism("Low")
                 adapt.realism = "Low"
-
-        elif self.button == 'High':
+                adapt().UpdateWorld()
+            else:
+                bpy.ops.error.message('INVOKE_DEFAULT', 
+                                      type = "Error",
+                                      message = "Low poly rendering can be only used in Cycles renderer")
+                                      
+        elif self.engineButton == 'High':
             
             adapt().changeEngine(engine,real = 'High')
             adapt().changeRealism("High")
             adapt.realism = "High"
-            
+            adapt().UpdateWorld()
+    
+        if self.engineButton == "Render":
+            bpy.context.space_data.viewport_shade = 'RENDERED'
 
         return{'FINISHED'}
 
@@ -1204,17 +1243,19 @@ class TLGUI(bpy.types.Panel):
         box.alignment = 'CENTER'
         row4 = box.row()
         row4.operator("render.engine",
-                      text="Blender renderer").button = "BLENDER_RENDER"
+                      text="Blender").engineButton = "BLENDER_RENDER"
         row4.operator("render.engine",
-                      text="Cycles renderer").button = "CYCLES"
-     
+                      text="Cycles").engineButton = "CYCLES"
+        row4.operator("render.engine",
+                      text="Render").engineButton = "Render"
+                                  
         row5 = box.row()
         row5.label("Realism")
         row6 = box.row()
         row6.operator("render.engine",
-                      text="Low poly Rendering").button = "Low"
+                      text="Low poly").engineButton = "Low"
         row6.operator("render.engine",
-                      text="High poly rendering").button = "High"
+                      text="Realistic").engineButton = "High"
 
         layout.row().separator()
 
@@ -1235,6 +1276,30 @@ class TLGUI(bpy.types.Panel):
 preview_collections = {}
 
 # Register
+
+class MessageOperator(bpy.types.Operator):
+    bl_idname = "error.message"
+    bl_label = "Message"
+    type = StringProperty()
+    message = StringProperty()
+ 
+    def execute(self, context):
+        self.report({'INFO'}, self.message)
+        print(self.message)
+        return {'FINISHED'}
+ 
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_popup(self, width= 400, height=1000)
+ 
+    def draw(self, context):
+        self.layout.label(self.message)
+        #row = self.layout
+        #row.prop(self, "type")
+        #row.prop(self, "message")
+        #row = self.layout.split(0.80)
+        #row.label("") 
+        #row.operator("error.ok")
 
 
 def register(module):
