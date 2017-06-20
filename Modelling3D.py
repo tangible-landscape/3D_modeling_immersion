@@ -524,9 +524,9 @@ def subdivide(cutNo):
 
 class adapt:
     
-    world = bpy.context.scene.world.name
-    realism = world.split(".")[1]
-    engine = bpy.context.scene.render.engine
+    #world = bpy.context.scene.world.name
+    #realism = world.split(".")[1]
+    #engine = bpy.context.scene.render.engine
     
     def __init__(self):
 
@@ -541,6 +541,10 @@ class adapt:
         self.humanCamera = "Camera"
         self.humanTarg = "HumanCamTarg"
         
+        self.engine = bpy.context.scene.render.engine
+        self.world = bpy.context.scene.world.name
+        self.realism = self.world.split(".")[1]
+
         
         self.vantage = "vantage"
         self.vantagetxt = "vantage.txt"
@@ -554,7 +558,7 @@ class adapt:
         self.sun = bpy.data.objects["Sun"]
     
 
-    def changeEngine(self, mode, real = realism):
+    def changeEngine(self, mode, real):
 
         # Change materials #
         if mode != self.engine or real != self.realism:
@@ -613,9 +617,9 @@ class adapt:
                             space.viewport_shade = 'MATERIAL'
         
 
-    def UpdateWorld(self): 
+    def UpdateWorld(self, engine, realism): 
         
-        newWorld = self.engine + "." + self.realism       
+        newWorld = engine + "." + realism       
         bpy.context.scene.world = bpy.data.worlds[newWorld]
         self.world= bpy.data.worlds[newWorld]
 
@@ -651,7 +655,7 @@ class adapt:
     def terrain(self):
 
         try:
-
+            print ("terrain recieved")
             if bpy.data.objects.get(self.plane):
                 selectOnly(self.plane, delete=True)
 
@@ -660,13 +664,9 @@ class adapt:
             selectOnly(self.plane)
             bpy.ops.object.convert(target="MESH")
             # smooth(self.plane, 3, 1)
-            if self.engine == "CYCLES":
-                mat = self.engine[0] + "." + self.realism[0] + "_Grass"
-            else:    
-                mat = "B._Grass"
-             
-            matSide = self.engine + ".Side"
-            
+            mat = self.engine[0] + ".Grass" + "." + self.realism
+            matSide = self.engine[0] + ".Side" + "." + self.realism
+            print (mat)
             changeMat(self.plane, mat)
             addSide(self.plane,matSide)
 
@@ -729,7 +729,7 @@ class adapt:
             tar.location = [me.vertices[-1].co.x,
                             me.vertices[-1].co.y,
                             me.vertices[0].co.z+16]
-            toggleCam(self.vantageCam, adaptGrass=True)
+            toggleCam(self.vantageCam, adaptGrass=False)
             makeScratchfile(vantagePath, "vector")
 
         except:
@@ -1002,9 +1002,9 @@ class Engine_buttons(bpy.types.Operator):
             if realism == "High" and engine != "BLENDER_RENDER" :
                 adapt().changeEngine("BLENDER_RENDER",real=realism)
                 self.mode = "BLENDER_RENDER"
-                adapt.realism = realism
-                adapt.engine = "BLENDER_RENDER"
-                adapt().UpdateWorld()
+                adapt().realism = realism
+                adapt().engine = "BLENDER_RENDER"
+                adapt().UpdateWorld("BLENDER_RENDER", "High")
                 
             else:
                 bpy.ops.error.message('INVOKE_DEFAULT', 
@@ -1016,17 +1016,16 @@ class Engine_buttons(bpy.types.Operator):
             if engine != "CYCLES":
                 
                 adapt().changeEngine("CYCLES", real=realism)
-                adapt.engine= "CYCLES"
-                adapt.realism = realism
-                adapt().UpdateWorld()
+                adapt().engine= "CYCLES"
+                adapt().realism = realism
+                adapt().UpdateWorld("CYCLES", realism)
 
         elif self.engineButton == 'Low':
             
             if engine == "CYCLES":
                 adapt().changeEngine(engine,real = 'Low')
                 adapt().changeRealism("Low")
-                adapt.realism = "Low"
-                adapt().UpdateWorld()
+                adapt().UpdateWorld("CYCLES",'Low')
             else:
                 bpy.ops.error.message('INVOKE_DEFAULT', 
                                       type = "Error",
@@ -1036,8 +1035,8 @@ class Engine_buttons(bpy.types.Operator):
             
             adapt().changeEngine(engine,real = 'High')
             adapt().changeRealism("High")
-            adapt.realism = "High"
-            adapt().UpdateWorld()
+            adapt().realism = "High"
+            adapt().UpdateWorld(engine,'High')
     
         if self.engineButton == "Render":
             bpy.context.space_data.viewport_shade = 'RENDERED'
