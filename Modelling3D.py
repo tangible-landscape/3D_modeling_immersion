@@ -832,9 +832,8 @@ class adapt:
             density = 700
         else:
             density = 500
-        if (not self.terrain.particle_systems or
-            patchType not in self.terrain.particle_systems):
-            particle(self.plane, specieType, density, group=True, particle_name=patchType)
+
+        particle(self.plane, specieType, density, group=True, particle_name=patchType)
             #self.terrain.particle_systems[0].name = patchType
 
         if particleName not in bpy.data.textures:
@@ -894,7 +893,10 @@ class ModalTimerOperator(bpy.types.Operator):
                         self.adaptMode = "TRAIL"
 
                     if emptyFile in fileList:
-                        remove("patch_")
+                        if self.terrain.particle_systems:
+                                for i in self.terrain.modifiers:
+                                    if "Particle" in i.name:
+                                        self.terrain.modifiers.remove(i)
                         makeScratchfile(emptyPath, "text")
 
                     if vantageFile in fileList:
@@ -923,6 +925,7 @@ class ModalTimerOperator(bpy.types.Operator):
             self._timer = wm.event_timer_add(1, context.window)
             self.treePatch = "TreePatch"
             self.emptyTree = "empty.txt"
+            self.terrain = bpy.data.objects["terrain"]
             self.adaptMode = None
             adapt.realism = "High"
 
@@ -1099,136 +1102,6 @@ class Engine_buttons(bpy.types.Operator):
 #        return {'FINISHED'}
 
 # ####################### TREE LIBRARY AND GUI ###############################
-
-
-class ReplaceSpecies(bpy.types.Operator):
-
-    bl_idname = "add.object"
-    bl_label = "Add Object"
-
-    def __init__(self):
-
-        self.plantsDic = {
-                          "Bermuda": [10000, "OB_Y", 3],
-                          "Centipede": [10000, "OB_Y", 3],
-                          "Rye": [40000, "OB_Y", .8],
-                          "St. Augustine": [10000, "OB_Y", 3],
-                          "Kentucky Blue": [5000, "OB_Y", 1.8],
-                          "Tall Fescue": [30000, "OB_Y", .7]
-                          }
-
-    def execute(self, context):
-
-        selected_preview = bpy.data.window_managers["WinMan"].my_previews
-        category = context.scene.grass.cat
-
-        if category == "Grass" or category == "Weeds":
-
-            count = self.plantsDic[selected_preview][0]
-            rotation = self.plantsDic[selected_preview][1]
-            size = self.plantsDic[selected_preview][2]
-
-            obj = bpy.data.objects["grassPlane"]
-            bpy.context.scene.objects.active = obj
-            particle("grassPlane", selected_preview, count, specieSize=size,
-                     rotation=.2, rotObj=rotation, group=True,
-                     vertexGroup=True)
-            bpy.context.object.show_transparent = True
-            return{'FINISHED'}
-
-        else:
-
-            if category == "Decidous":
-                selectClass = [obj for obj in bpy.data.objects if "_class1_" in
-                               obj.name]
-            elif category == "Evergreen":
-                selectClass = [obj for obj in bpy.data.objects if "_class2_" in
-                               obj.name]
-            for obj in selectClass:
-                selectOnly(obj.name)
-                bpy.context.scene.objects.active = obj
-                count = calcArea(obj.name)/300
-                particle(obj.name, selected_preview,
-                         count, specieSize=.6,
-                         rotation=.02, rotObj="OB_Y", group=False)
-                return{'FINISHED'}
-# Update
-
-
-def update_category(self, context):
-    enum_previews_from_directory_items(self, context)
-
-# Drop Down Menu
-
-
-class Categories(bpy.types.PropertyGroup):
-    mode_options = [
-        ("Grass", "Grass", '', 0),
-        ("Weeds", "Weeds", '', 1),
-        ("Decidous", "Decidous", '', 2),
-        ("Evergreen", "Evergreen", '', 3),
-        ("Shrubs", "Evergreen", '', 4),
-        ("Hard Surfaces", "Hard Surfaces", '', 5),
-        ("Wetland", "Wetland", '', 6),
-        ]
-
-    cat = bpy.props.EnumProperty(
-        items=mode_options,
-        description="Select a Category",
-        default="Grass",
-        update=update_category
-    )
-
-
-# Generate Previews
-def enum_previews_from_directory_items(self, context):
-
-    category = context.scene.grass.cat
-
-    # Icons Directory
-    directory = (
-            os.path.dirname(bpy.path.abspath("//")) +
-            "/" + "/Icons" + "/" + category
-                )
-
-    enum_items = []
-
-    if context is None:
-        return enum_items
-    wm = context.window_manager
-
-    # Get the Preview Collection (defined in register func)
-    pcoll = preview_collections["main"]
-
-    if directory == pcoll.my_previews_dir:
-        return pcoll.my_previews
-
-    print("Scanning directory: %s" % directory)
-
-    if directory:
-                # Scan the Directory for PNG Files
-        image_paths = []
-        for fn in os.listdir(directory):
-            if fn.lower().endswith(""):
-                image_paths.append(fn)
-
-        # For each image in the directory, load the thumb unless
-        # it has already been loaded
-
-        for i, name in enumerate(image_paths):
-            # Generate a Thumbnail Preview for a File.
-            filepath = os.path.join(directory, name)
-
-            if filepath in pcoll:
-                enum_items.append((name, name, "", pcoll[filepath].icon_id, i))
-            else:
-                thumb = pcoll.load(filepath, filepath, 'IMAGE')
-                enum_items.append((name, name, "", thumb.icon_id, i))
-
-    pcoll.my_previews = enum_items
-    pcoll.my_previews_dir = directory
-    return pcoll.my_previews
-
 
 # Panel
 class TLGUI(bpy.types.Panel):
