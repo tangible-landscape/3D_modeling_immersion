@@ -70,47 +70,47 @@ waterPath = os.path.join(watchFolder, waterFile)
 emptyPath = os.path.join(watchFolder, emptyFile)
 
 def addSide(objName,mat):
-    
+
     ter = bpy.data.objects[objName]
     ter.select=True
 
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
     me = ter.data
-    
+
     if ter.mode == 'EDIT':
         bm = bmesh.from_edit_mesh(ter.data)
         vertices = bm.verts
- 
+
     else:
         vertices = ter.data.vertices
-    
-    verts = [ter.matrix_world * vert.co for vert in vertices] 
-    
+
+    verts = [ter.matrix_world * vert.co for vert in vertices]
+
     dic={"x":[], "y":[], "z":[]}
     for vert in verts:
         if not math.isnan(vert[0]):
             dic["x"].append(vert[0])
             dic["y"].append(vert[1])
             dic["z"].append(vert[2])
-    
+
     xmin = min(dic["x"])
     xmax = max(dic["x"])
     ymin = min(dic["y"])
     ymax = max(dic["y"])
     zmin = min(dic["z"])
-  
+
     tres = 3
-    
+
     for vert in vertices:
         if vert.co[0] < xmin + tres and vert.co[0] > xmin-tres:
             vert.select = True
             vert.co[2] = -50
-            
+
         elif vert.co[1] < ymin + tres and vert.co[1] > ymin-tres:
             vert.select = True
             vert.co[2] = -50
-            
+
         elif vert.co[0] < xmax + tres and vert.co[0] > xmax-tres:
             vert.select = True
             vert.co[2] = -50
@@ -118,36 +118,36 @@ def addSide(objName,mat):
             vert.select = True
             vert.co[2] = -50
     #bpy.ops.transform.translate(value=(0, 0, -100), constraint_axis=(False, False, True), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SHARP', proportional_size=45.2593)
-      
+
     bmesh.update_edit_mesh(me, True)
-    
+
     def NormalInDirection( normal, direction, limit = .5):
         return direction.dot( normal ) > limit
-    
+
     def GoingUp( normal, limit = .5):
         return NormalInDirection( normal, Vector( (0, 0, 1 ) ), limit )
-    
+
     def GoingDown( normal, limit = .5 ):
         return NormalInDirection( normal, Vector( (0, 0, -1 ) ), limit )
-    
+
     def GoingSide( normal, limit = .2 ):
-        return ( GoingUp( normal, limit ) == False and 
+        return ( GoingUp( normal, limit ) == False and
         GoingDown( normal, limit ) == False )
-    
+
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-    
+
     #Selects faces going side
-    
+
     for face in ter.data.polygons:
         face.select = GoingSide(face.normal)
-    
+
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-    
+
 
     changeMat(objName,mat,2)
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
-    
+
 
 
 
@@ -334,7 +334,7 @@ def calcArea(obj):
 
 def toggleCam(camInitial, multiple=True, adaptGrass=False):
         """ assign the camera scene to the passed camera name"""
-       
+
         grassPlane = bpy.data.objects["grassPlane"]
 
         if multiple:
@@ -369,7 +369,7 @@ def toggleCam(camInitial, multiple=True, adaptGrass=False):
             shrinkRaster2Obj("grassPlane", "terrain",
                              method='NEAREST_SURFACEPOINT',
                              offset=0.08, delModifier=True)
-                             
+
         else:
 
             if grassPlane.hide == False:
@@ -401,7 +401,7 @@ def getTime(returnType):
 def makeScratchfile(fPath, fType):
     """ Renames the passed file relative to the current time and puts in
     the scratch path"""
-
+    print (fPath)
     out_time = getTime("time")
     fName = os.path.basename(fPath).split(".")[0]
     scratchName = scratchFolder + "/" + fName + "_" + out_time
@@ -409,6 +409,7 @@ def makeScratchfile(fPath, fType):
 
         if fType == "raster":
             outFile = scratchName + ".tif"
+            print (outFile,fPath)
             os.rename(fPath, outFile)
         elif fType == "text":
             outFile = scratchName + ".txt"
@@ -427,23 +428,23 @@ def makeScratchfile(fPath, fType):
 
 
 def particle(obj, specieType, count, specieSize=.6, rotation=.02,
-             rotObj="OB_Y", group=False, vertexGroup=False):
+             rotObj="OB_Y", group=False, vertexGroup=False, particle_name="particle_setting"):
     """ Get object, specie type, specie count, and specie size
     and apply particle system """
 
     selectOnly(obj)
     # remove all previously assigned particles systems #
     obj = bpy.data.objects[obj]
-    for i in obj.modifiers:
-        if "ParticleSystem" in i.name:
-            obj.modifiers.remove(obj.modifiers.get(i.name))
-
     # Create an new particle system #
     bpy.ops.object.particle_system_add()
     psys1 = obj.particle_systems[-1]
+    psys1.name = particle_name
     pset1 = psys1.settings
     pset1.name = 'TreePatch'
-    pset1.type = 'HAIR'
+    pset1.type = 'EMITTER'
+    pset1.physics_type = 'NO'
+    pset1.use_even_distribution = False
+    pset1.use_emit_random = False
     pset1.use_rotation_dupli = False
     pset1.use_dead = True
 
@@ -461,16 +462,13 @@ def particle(obj, specieType, count, specieSize=.6, rotation=.02,
         pset1.render_type = 'OBJECT'
         pset1.dupli_object = bpy.data.objects[specieType]
 
-    pset1.use_advanced_hair = True
-    pset1.use_emit_random = False
+
     pset1.lifetime_random = 0.0
     pset1.emit_from = 'FACE'
-    pset1.use_even_distribution = True
     pset1.distribution = 'JIT'
     pset1.count = count
     pset1.use_render_emitter = True
 
-    pset1.use_emit_random = True
     pset1.userjit = 70
     pset1.use_modifier_stack = True
     pset1.hair_length = specieSize
@@ -482,7 +480,7 @@ def particle(obj, specieType, count, specieSize=.6, rotation=.02,
     pset1.particle_size = 1
     pset1.size_random = .4
     pset1.rotation_mode = rotObj
-    
+
 
 def changeMat(obj, mat, slot=1):
 
@@ -496,7 +494,7 @@ def changeMat(obj, mat, slot=1):
     # no slots
         obj.data.materials.append(mat)
         print ("1")
-        
+
     if slot > 1:
         obj.active_material_index = slot-1
         bpy.ops.object.material_slot_assign()
@@ -523,14 +521,15 @@ def subdivide(cutNo):
 
 
 class adapt:
-    
+
     #world = bpy.context.scene.world.name
     #realism = world.split(".")[1]
     #engine = bpy.context.scene.render.engine
-    
+
     def __init__(self):
 
         self.plane = "terrain"
+        self.terrain = bpy.data.objects[self.plane]
         self.treePatch = "TreePatch"
         self.trail = "trail"
         self.indexlist = []
@@ -540,12 +539,12 @@ class adapt:
         self.water = "water"
         self.humanCamera = "Camera"
         self.humanTarg = "HumanCamTarg"
-        
+
         self.engine = bpy.context.scene.render.engine
         self.world = bpy.context.scene.world.name
         self.realism = self.world.split(".")[1]
 
-        
+
         self.vantage = "vantage"
         self.vantagetxt = "vantage.txt"
         self.target = "camtarget"
@@ -556,47 +555,47 @@ class adapt:
 
         self.clouds = bpy.data.objects["Clouds"]
         self.sun = bpy.data.objects["Sun"]
-    
+
 
     def changeEngine(self, mode, real):
 
         # Change materials #
         if mode != self.engine or real != self.realism:
-            
+
             for obj in bpy.data.objects:
-    
+
                 for index, mat in enumerate(obj.material_slots):
                     if not obj.hide:
- 
+
                         if (mat.name.split(".")[0] == self.engine[0] and
                                 "cube" not in obj.name):
 
                             if self.realism in mat.name:
                                 print (self.realism)
-                                newMatName = (mode[0] + "." + 
+                                newMatName = (mode[0] + "." +
                                 mat.name.split(".")[1] + "." + real)
                                 print (newMatName)
                             else:
                                 newMatName = (mode[0] + "." +
                                 mat.name.split(".")[1])
-                            
+
                             mat = bpy.data.materials.get(newMatName)
                             obj.data.materials[index] = mat
-                                                               
+
         if mode != self.engine:
-                for lamp in bpy.data.lamps: 
+                for lamp in bpy.data.lamps:
                     lampInd = lamp.name.split(".")[0]
-                                    
+
                     if lampInd == self.engine[0] or lampInd == mode[0]:
                         newLampName = mode[0] + lamp.name[1:]
-                        if (newLampName in bpy.data.objects and 
+                        if (newLampName in bpy.data.objects and
                             not bpy.data.objects[newLampName].hide ):
                             newLamp = bpy.data.objects[newLampName]
                             oldLamp = bpy.data.objects[lamp.name]
                             oldLamp.layers[0] = False
                             oldLamp.layers[3] = True
                             newLamp.layers[0] = True
-                            
+
                 # Change rendere engine #
                 bpy.context.scene.render.engine = mode
                 self.engine = mode
@@ -615,16 +614,16 @@ class adapt:
                         else:
                             bpy.context.scene.world.active_texture_index = 1
                             space.viewport_shade = 'MATERIAL'
-        
 
-    def UpdateWorld(self, engine, realism): 
-        
-        newWorld = engine + "." + realism       
+
+    def UpdateWorld(self, engine, realism):
+
+        newWorld = engine + "." + realism
         bpy.context.scene.world = bpy.data.worlds[newWorld]
         self.world= bpy.data.worlds[newWorld]
 
     def changeRealism(self,mode):
-        
+
       self.realism = mode
 
       for obj in bpy.data.objects:
@@ -635,23 +634,23 @@ class adapt:
                         newParticle= mode + "_" + obj.name.split("_")[1]+ "_single"
                     else:
                         newParticle= mode + "_" + obj.name.split("_")[1]
-                        
+
                     if setting.render_type == 'GROUP':
                         setting.dupli_group = bpy.data.groups[newParticle]
                     else:
                         setting.dupli_object = bpy.data.objects[newParticle]
 
-               
+
       if mode == "High":
           self.clouds.hide = True
           self.sun.hide = True
-          
+
       elif mode == "Low":
           self.clouds.hide = False
           self.sun.hide = False
 
       self.changeEngine(self.engine,mode)
-        
+
     def terrain(self):
 
         try:
@@ -701,7 +700,7 @@ class adapt:
             mat = self.engine[0] + ".Water"
             changeMat(self.water, mat)
 
-            if (int(getTime("sec"))) % 10 == 0:
+            if (int(getTime("sec"))) % 2 == 0:
                 makeScratchfile(waterPath, "raster")
 
             return "imported"
@@ -745,10 +744,10 @@ class adapt:
             if bpy.ops.object.mode_set.poll():
 
                 bpy.ops.object.mode_set(mode='EDIT')
-                bpy.ops.mesh.select_all(action='SELECT')
-                bpy.ops.mesh.vertices_smooth()
-                bpy.ops.mesh.vertices_smooth()
                 bpy.ops.mesh.remove_doubles()
+                bpy.ops.mesh.select_all(action='SELECT')
+                #bpy.ops.mesh.vertices_smooth()
+                #bpy.ops.mesh.vertices_smooth()
 
                 bpy.context.space_data.cursor_location = (-440, 29, 34)
                 bpy.ops.mesh.sort_elements(type='CURSOR_DISTANCE',
@@ -764,62 +763,91 @@ class adapt:
                 bpy.context.object.data.twist_mode = 'Z_UP'
                 bpy.context.object.data.twist_smooth = 10
                 obj = bpy.data.objects[self.trail]
-                obj.location[2]= obj.location[2] + 1 
-                # selectOnly(self.camWalk, delete=False)
-                # traiLine.select = True
-                # bpy.ops.object.parent_set(type='FOLLOW')
+                obj.location[2]= obj.location[2] + 1
+
                 mat = self.engine[0] + ".boardwalk"
                 changeMat(self.trail, mat)
-
-                if (int(getTime("sec"))) % 2 == 0:
-                    makeScratchfile(trailPath, "vector")
+                smooth(self.trail, .18,2)
+                makeScratchfile(trailPath, "vector")
 
                 return "imported"
         except:
             print ("Camera trajectory import unsucsessfull")
 
+    def treePatchFill_old(self, patch):
+
+        # import patchShapefile #
+        try:
+            patchPath = os.path.join(watchFolder, patch)
+            bpy.ops.importgis.shapefile(filepath=patchPath,
+                                        shpCRS=CRS)
+
+            # get patch type and index #
+
+            objName = bpy.context.scene.objects.active.name
+            specieType = self.realism + "_" + objName.split("_")[1]
+
+            # calculate number of species based on density and
+            # apply particle system #
+            selectOnly(objName)
+            mat = self.engine[0] + ".Transparent"
+            changeMat(objName, mat)
+
+            area = calcArea(objName)
+            if area < 400:
+                count = 1
+                specieType= specieType + "_single"
+            elif area > 400 and area < 900:
+                count = 2
+            elif area > 900 and area < 1200:
+                count = 3
+            else:
+                count = area/300
+
+            if specieType == "class3":
+                particle(objName, specieType,
+                         area/100, group=True)
+            else:
+                particle(objName, specieType, count, group=True)
+
+            makeScratchfile(patchPath, "vector")
+
+            return "imported"
+
+        except:
+            print ("tree drawing failed")
+
     def treePatchFill(self, patch):
-                        
+
                         # import patchShapefile #
-                        try:
-                            patchPath = os.path.join(watchFolder, patch)
-                            bpy.ops.importgis.shapefile(filepath=patchPath,
-                                                        shpCRS=CRS)
+                        #try:
+        patchPath = os.path.join(watchFolder, patch)
+        patchType = patch.split("_")[1]
+        particleName = "particle_" + patchType
+        img = bpy.data.images.load(patchPath)
 
-                            # get patch type and index #
-                            
-                            objName = bpy.context.scene.objects.active.name
-                            specieType = self.realism + "_" + objName.split("_")[1]
+        specieType = self.realism + "_" + patchType
 
-                            # calculate number of species based on density and
-                            # apply particle system #
-                            selectOnly(objName)
-                            mat = self.engine[0] + ".Transparent"
-                            changeMat(objName, mat)
+        if patchType == "class3":
+            density = 700
+        else:
+            density = 500
+        if (not self.terrain.particle_systems or
+            patchType not in self.terrain.particle_systems):
+            particle(self.plane, specieType, density, group=True, particle_name=patchType)
+            #self.terrain.particle_systems[0].name = patchType
 
-                            area = calcArea(objName)
-                            if area < 400:
-                                count = 1
-                                specieType= specieType + "_single"
-                            elif area > 400 and area < 900:
-                                count = 2
-                            elif area > 900 and area < 1200:
-                                count = 3
-                            else:
-                                count = area/300        
-                            
-                            if specieType == "class3":
-                                particle(objName, specieType,
-                                         area/100, group=True)
-                            else:
-                                particle(objName, specieType, count, group=True)
-                                
-                            makeScratchfile(patchPath, "vector")
-                            
-                            return "imported"
+        if particleName not in bpy.data.textures:
+            bpy.data.textures.new(particleName, type='IMAGE')
 
-                        except:
-                            print ("tree drawing failed")
+        bpy.data.textures[particleName].image = img
+        self.terrain.particle_systems[patchType].settings.\
+        active_texture = bpy.data.textures[particleName]
+
+        return "imported"
+
+                        #except:
+                            #print ("tree drawing failed")
 
 
 class ModalTimerOperator(bpy.types.Operator):
@@ -836,6 +864,7 @@ class ModalTimerOperator(bpy.types.Operator):
 
             # this condition encomasses all the actions required for watching
             # the folder and related file/object operations .
+
             if event.type == "TIMER":
 
                 # counter = getTime('sec')
@@ -878,13 +907,10 @@ class ModalTimerOperator(bpy.types.Operator):
                     for fileName in fileList:
                         if(
                             fileName.startswith("patch_") and
-                            fileName[-4:] == ".shp" and
-                            fileName[:-4] + ".shx" in fileList and
-                            fileName[:-4] + ".dbf" in fileList and
-                            fileName[:-4] + ".prj" in fileList and
-                            not bpy.data.objects.get(fileName[:-4])
-                          ):
+                            fileName[-4:] == ".png" and
+                            fileName not in bpy.data.images):
                             adapt().treePatchFill(fileName)
+
                             self.adaptMode = "PATCH"
 
             return {"PASS_THROUGH"}
@@ -894,13 +920,13 @@ class ModalTimerOperator(bpy.types.Operator):
             bpy.context.space_data.show_manipulator = False
             wm = context.window_manager
             wm.modal_handler_add(self)
-            self._timer = wm.event_timer_add(2, context.window)
+            self._timer = wm.event_timer_add(1, context.window)
             self.treePatch = "TreePatch"
             self.emptyTree = "empty.txt"
             self.adaptMode = None
             adapt.realism = "High"
 
-#            for file in os.listdir(watchFolder):
+#            for file in os.listdir(watchFolder):`
 #                try:
 #                    os.remove(os.path.join(watchFolder, file))
 #                except:
@@ -978,12 +1004,27 @@ class mist(bpy.types.Operator):
         if not bpy.context.scene.world.mist_settings.use_mist:
             bpy.context.scene.world.mist_settings.use_mist = True
             return {'FINISHED'}
-        
+
         if bpy.context.scene.world.mist_settings.use_mist:
             bpy.context.scene.world.mist_settings.use_mist = False
             return {'FINISHED'}
 
+class Object_operators(bpy.types.Operator):
+    bl_idname = "objects.operator"
+    bl_label = "Object Operators"
+    button = bpy.props.StringProperty()
 
+    def execute(self, context):
+
+        world = bpy.context.scene.world.name
+        realism = world.split(".")[1]
+
+        if self.button == "TREES":
+            remove("patch")
+        elif self.button == "TRAIL":
+            remove("trail")
+
+        return{'FINISHED'}
 
 
 class Engine_buttons(bpy.types.Operator):
@@ -992,7 +1033,7 @@ class Engine_buttons(bpy.types.Operator):
     engineButton = bpy.props.StringProperty()
 
     def execute(self, context):
-        
+
         engine = bpy.context.scene.render.engine
         world = bpy.context.scene.world.name
         realism = world.split(".")[1]
@@ -1005,39 +1046,39 @@ class Engine_buttons(bpy.types.Operator):
                 adapt().realism = realism
                 adapt().engine = "BLENDER_RENDER"
                 adapt().UpdateWorld("BLENDER_RENDER", "High")
-                
+
             else:
-                bpy.ops.error.message('INVOKE_DEFAULT', 
+                bpy.ops.error.message('INVOKE_DEFAULT',
                                       type = "Error",
                                       message = "Blender renderer can be only used in realistic mode")
-                                      
+
         elif self.engineButton == 'CYCLES':
-            
+
             if engine != "CYCLES":
-                
+
                 adapt().changeEngine("CYCLES", real=realism)
                 adapt().engine= "CYCLES"
                 adapt().realism = realism
                 adapt().UpdateWorld("CYCLES", realism)
 
         elif self.engineButton == 'Low':
-            
+
             if engine == "CYCLES":
                 adapt().changeEngine(engine,real = 'Low')
                 adapt().changeRealism("Low")
                 adapt().UpdateWorld("CYCLES",'Low')
             else:
-                bpy.ops.error.message('INVOKE_DEFAULT', 
+                bpy.ops.error.message('INVOKE_DEFAULT',
                                       type = "Error",
                                       message = "Low poly rendering can be only used in Cycles renderer")
-                                      
+
         elif self.engineButton == 'High':
-            
+
             adapt().changeEngine(engine,real = 'High')
             adapt().changeRealism("High")
             adapt().realism = "High"
             adapt().UpdateWorld(engine,'High')
-    
+
         if self.engineButton == "Render":
             bpy.context.space_data.viewport_shade = 'RENDERED'
 
@@ -1147,7 +1188,7 @@ def enum_previews_from_directory_items(self, context):
     # Icons Directory
     directory = (
             os.path.dirname(bpy.path.abspath("//")) +
-            "/" + "Trees/Icons" + "/" + category
+            "/" + "/Icons" + "/" + category
                 )
 
     enum_items = []
@@ -1229,15 +1270,22 @@ class TLGUI(bpy.types.Panel):
                      icon="BORDER_LASSO")
 
         box = layout.box()
-        box.label('Atmospheric conditions')
-        row3 = box.row()
-
-        row3.operator("wm.rotarycam", text="Change Sun Position")
+        box.label('Atomospheric adjustments')
 
         row4 = box.row()
         row4.operator("wm.mist", text="Toggle Mist", icon="FORCE_TURBULENCE")
 
         box = layout.box()
+        box.label('Object operations')
+
+        row1 = box.row()
+        row1.operator("objects.operator", text="Remove trees").button = "TREES"
+        row2 = box.row()
+        row2.operator("objects.operator", text="Trail").button = "TRAIL"
+        box = layout.box()
+
+
+
         box.label('Rendering and Realism')
         box.alignment = 'CENTER'
         row4 = box.row()
@@ -1247,7 +1295,7 @@ class TLGUI(bpy.types.Panel):
                       text="Cycles").engineButton = "CYCLES"
         row4.operator("render.engine",
                       text="Render").engineButton = "Render"
-                                  
+
         row5 = box.row()
         row5.label("Realism")
         row6 = box.row()
@@ -1258,21 +1306,22 @@ class TLGUI(bpy.types.Panel):
 
         layout.row().separator()
 
-        box = layout.box()
-        box.label('Planting options')
-        # Drop Down Menu
-        col = box.column()
-        col.prop(context.scene.grass, "cat", text="Category")
-
-        # Previews
-        row = box.row()
-        row.template_icon_view(wm, "my_previews", show_labels=True)
-
-        # Add Button
-        row = box.row()
-        row.operator("add.object", icon="ZOOMIN", text="Replace plant")
-
-preview_collections = {}
+#        ### plants ! UNDER DEVELOPMENT !! ###
+#        box = layout.box()
+#        box.label('Planting options')
+#        # Drop Down Menu
+#        col = box.column()
+#        col.prop(context.scene.grass, "cat", text="Category")
+#
+#        # Previews
+#        row = box.row()
+#        row.template_icon_view(wm, "my_previews", show_labels=True)
+#
+#        # Add Button
+#        row = box.row()
+#        row.operator("add.object", icon="ZOOMIN", text="Replace plant")
+#
+#preview_collections = {}
 
 # Register
 
@@ -1281,23 +1330,23 @@ class MessageOperator(bpy.types.Operator):
     bl_label = "Message"
     type = StringProperty()
     message = StringProperty()
- 
+
     def execute(self, context):
         self.report({'INFO'}, self.message)
         print(self.message)
         return {'FINISHED'}
- 
+
     def invoke(self, context, event):
         wm = context.window_manager
         return wm.invoke_popup(self, width= 400, height=1000)
- 
+
     def draw(self, context):
         self.layout.label(self.message)
         #row = self.layout
         #row.prop(self, "type")
         #row.prop(self, "message")
         #row = self.layout.split(0.80)
-        #row.label("") 
+        #row.label("")
         #row.operator("error.ok")
 
 
@@ -1310,15 +1359,15 @@ def register(module):
             subtype='DIR_PATH',
             default="")
 
-    WindowManager.my_previews = EnumProperty(
-            items=enum_previews_from_directory_items)
-
-    pcoll = bpy.utils.previews.new()
-    pcoll.my_previews_dir = ""
-    pcoll.my_previews = ()
-
-    preview_collections["main"] = pcoll
-    bpy.types.Scene.grass = bpy.props.PointerProperty(type=Categories)
+#    WindowManager.my_previews = EnumProperty(
+#            items=enum_previews_from_directory_items)
+#
+#    pcoll = bpy.utils.previews.new()
+#    pcoll.my_previews_dir = ""
+#    pcoll.my_previews = ()
+#
+#    preview_collections["main"] = pcoll
+#    bpy.types.Scene.grass = bpy.props.PointerProperty(type=Categories)
 
 
 def unregister(module):
