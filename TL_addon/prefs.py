@@ -43,11 +43,11 @@ class TL_PREFS(AddonPreferences):
         setSettings(prefs)
 
     Folder = StringProperty(
-        name = "Cache folder",
+        name = "Coupling folder",
         default = getSettings()['folder'],
-        description = "Define a folder where the Blender File is located (e.g., Modeling3D.blend)",
+        description = "Define a folder where the Blender File is located (e.g., D:/TL_coupling)",
         subtype = 'DIR_PATH',
-        update = updateCRS
+        update = updateFolder
         )
 
     CRS = StringProperty(
@@ -55,14 +55,14 @@ class TL_PREFS(AddonPreferences):
         default = getSettings()['CRS'],
         description = "Type in EPSG code of the file Georeferene system e.g., 4328",
         subtype = 'NONE',
-        update = updateTime
+        update = updateCRS
         )
     Timer = IntProperty(
         name = "Update speed",
         default = 1,
         description = "Type in number of updates per seconds: This would increase the update rate at the expense of performance",
         subtype = 'NONE',
-        update = updateFolder
+        update = updateTime
         )
 
     fontColor = FloatVectorProperty(
