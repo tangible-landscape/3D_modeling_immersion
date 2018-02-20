@@ -1,26 +1,72 @@
-# Tangible Landscape Immersive Extension
+# Real-time 3D modeling and immersion with Tangibles
+![abstract](/documentation/img/Photo_collage.jpg)
 
 ## Abstract
-Tangible Landscape is a tangible interface for geographic information systems (GIS). It interactively couples physical and digital models of a landscape so that users can intuitively explore, model, and analyze geospatial data in a collaborative environment. Conceptually Tangible Landscape lets users hold a GIS in their hands so that they can feel the shape of the topography, naturally sculpt new landforms, and interact with simulations like water flow.
-Since it only affords a bird's-eye view of the landscape, we coupled it with an immersive virtual environment so that users can virtually walk around the modeled landscape and visualize it at a human-scale. Now as users shape topography, draw trees, define viewpoints, or route a walkthrough they can see the results on the projection-augmented model, rendered on a display, or rendered on a head-mounted display.
+
+We have paired GRASS GIS with Blender, a state-of-the-art 3D modeling
+and rendering program, to allow real-time 3D rendering and immersion with Tangible Landscape. Tangible Landscape is a tangible interface for geographic information systems (GIS). It interactively couples physical and digital models of a landscape so that users can intuitively explore, model, and analyze geospatial data in a collaborative environment. Conceptually Tangible Landscape lets users hold a GIS in their hands so that they can feel the shape of the topography, naturally sculpt new landforms, and interact with simulations like water flow. As users manipulate a tangible model with topography and objects, geospatial analyses and simulations are projected onto the tangible model and perspective views are realistically rendered on monitors and head-mounted displays (HMDs) in near real-time. Users can visualize in near real-time the changes they are making with either bird’seye views or perspective views from human vantage points. While geospatial data is typically visualized as maps, axonometric views, or bird’s-eye views, human-scale perspective views help us to understand how people would experience and perceive spaces within the landscape.
+
+
+#### How it works ####
+Blender and GRASS GIS are loosely coupled through file-based communication established via a local wireless or Ethernet connection. GRASS GIS exports the spatial data as a standard raster, a vector, or a text file containing coordinates into a specified directory typically called Watch (Figure setup). The Tangible Landscape Blender plugin (modeling3D.py)—implemented and executed inside Blender— constantly monitors the directory for incoming information. Examples of spatial data include a terrain surface (raster), water bodies (3D polygons or rasters), forest patches
+(3D polygons), a camera location (3D polyline, text file), and routes (3D polylines).
+Upon receiving this information, the file is imported using the BlenderGIS add-on.
+Then the relevant modeling and shading procedures for updating an existing 3D
+object or creating a new 3D object are applied. The adaptation procedure applied
+depends upon the type of spatial data and is handled by a module called adapt. All
+3D elements in the scene (i.e. objects, lights, materials, and cameras) reside in a
+Blender file (modeling3D.blend).
+
+![Coupling schema](/documentation/img/coupling_schema.jpg)
 
 ## Dependencies
--   Blender (https://www.blender.org/download/)
--   Blender virtual_reality_viewport addon (https://github.com/dfelinto/virtual_reality_viewport)
--   BlenderGIS addon (https://github.com/domlysz/BlenderGIS)
+-   [Blender 2.79](https://www.blender.org/download/)
+-   [BlenderGIS addon](https://github.com/domlysz/BlenderGIS)
+-   [Blender virtual_reality_viewport addon](https://github.com/dfelinto/virtual_reality_viewport)
 
 ## Installation
-Note : Tangible Landscape should be setup and installed before installing the extension.
-see https://github.com/tangible-landscape/grass-tangible-landscape/blob/master/README.md
+#### 1. Installing and setting up Tangible landscape addon in Blender
+  * Open Blender ``user preferences`` (Alt + Ctrl + U) > Go to ``add-ons`` tab > ``Install from file`` (bottom center of the panel) > locate TL_addon.zip > press enter
+  * Select on the addon to activate it.
+  * In the ``Preferences`` tab > ``Coupling folder`` > browse and locate TL_coupling folder (e.g, D:/TL_coupling)
+  * In the ``Coordinate reference system`` field type-in the 4 digit EPSG code related to your GIS dataset. The provided examples use 3358.
+  * Click on ``Save User Settings`` on the bottom left corner of user preferences
+#### 2. Installing and setting up Blender virtual_reality_viewport addon
+  * Install and activate BlenderGIS addon (for detailed instruction see [BlenderGIS wiki](https://github.com/domlysz/BlenderGIS/wiki/Install-and-usage))
+  * Go to ``Preferences`` > ``BlenderGIS preferences`` > ``Spatial reference system`` > add your EPSG 4 digit code and a description  (e.g., 3358 , NAD 1983)
+  * From the ``Import/Export panel`` deactivate ``Adjust 3D view`` and ``Force textured solid shading``.
+  * Click on ``Save User Settings`` on the bottom left corner of user preferences
+#### 3. Installing and setting up Blender virtual_reality_viewport addon
+  * Install and activate VR addon (for detailed instruction see [addon installation guide](https://github.com/dfelinto/virtual_reality_viewport)
+  * Click on ``Save User Settings`` on the bottom left corner of user preferences
+#### 4. Optimizing the blender scene
+In this step we adjust system settings to optimize the viewport rendering performance.
+  * In the ``Blender User Preferences`` > ``System`` :
+    * In ``General`` section > adjust ``DPI``to increase/decrease icon size based on your preferences and monitor resolution.
+    * In ``OpenGL``section > deactivate ``Mipmaps`` , ``GPU Mipmap Generation``, and ``16Bit Float Textures``
+    * Set ``Selection`` to Automatic
+    * Set ``Anistropic filtering`` to Off
+    * Set ``Window Draw Method`` to Automatic and No MultiSample
+    * Deactivate ``Text Anti-aliasing``
+    * In ``Texture`` section set ``Texture limit size`` to Off
+    * Set ``Images Draw Method`` to GLSL
+  * Click on ``Save User Settings`` on the bottom left corner of user preferences
+## Testing
+==================================
 
-1.  Most recent Blender build 
-2.  Install Blender virtual_reality_viewport addon 
-3.  Install BlenderGIS addon 
-4.  Download the repository into a new folder and run blender
-5.  Open immersive_extention.blend in blender 
-6.  Activate both of the installed addons in Blender-preferences-addon menu
-7.  Load and run the immersive_extension.py in blender scripting environment . You should be able to see the Tangible Landscape gui on the 3d view toolbar 
-8.  From the gui click "turn on watch mode"
-9.  For testing the functionality copy the point.ply from sample_data folder to the Watch folder. You should be able to see the geometry changed. 
+For testing the real-time modeling you can manually copy sample geospatial data from test folder to the watch folder.  
+* Inside the test folder you can find the following sample data are provided:
+  * Terrain raster (terrain.tif)
+  * Water raster (water.tif)
+  * Multiple vantage points (vantage.shp)
+  * 4 tree patches (patch_class1.png, patch_class2.png, patch_class3.png, patch_class2.png)
+  * Trail (trail.shp)
+* Open modeling3D.Blend
+* Locate Tangible landscape panel from ``Toolshelf`` and click on ``Turn on Watch mode``
+* Copy the test files in one by one starting with the terrain to the Watch folder. You should be able to see the terrain changes constructed.
+* Cancel Watch mode at anytime using Right-click or Scape while mouse cursor is in 3D views
+* Toggle Maximize view using ``Ctrl + Up`` or full screen using ``Alt + F10``
+## Addon features
 
+### Using your own data
 ![Immersive extension GUI](https://github.com/tangible-landscape/tangible-landscape-immersive-extension/blob/master/blob/blender_gui_1.PNG)
