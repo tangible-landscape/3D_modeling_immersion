@@ -25,14 +25,11 @@ Blender file (modeling3D.blend).
 -   [Blender virtual_reality_viewport addon](https://github.com/dfelinto/virtual_reality_viewport)
 
 ## Installation
-==================================
-Note : Tangible Landscape should be setup and installed before installing the extension.
-[see](https://github.com/tangible-landscape/grass-tangible-landscape/blob/master/README.md)
 
 #### Installing and setting up Tangible landscape addon in Blender
   * Open Blender ``user preferences`` (Alt + Ctrl + U) > Go to ``add-ons`` tab > ``Install from file`` (bottom center of the panel) > locate TL_addon.zip > press enter
   * Select on the addon to activate it.
-  * In the ``Preferences tab`` > ``Coupling folder`` > browse and locate TL_coupling folder (e.g, D:/TL_coupling)
+  * In the ``Preferences`` tab > ``Coupling folder`` > browse and locate TL_coupling folder (e.g, D:/TL_coupling)
   * In the ``Coordinate reference system`` field type-in the 4 digit EPSG code related to your GIS dataset. The provided examples use 3358.
   * Click on ``Save User Settings`` on the bottom left corner of user preferences
 #### Installing and setting up Blender virtual_reality_viewport addon
