@@ -1,5 +1,5 @@
 # Real-time 3D modeling and immersion with Tangibles
-![abstract](/documentation/img/Photo_collage.jpg)
+<img src="/documentation/img/Photo_collage.jpg" width=500>
 
 ## Abstract
 
@@ -17,7 +17,7 @@ depends upon the type of spatial data and is handled by a module called adapt. A
 3D elements in the scene (i.e. objects, lights, materials, and cameras) reside in a
 Blender file (modeling3D.blend).
 
-![Coupling schema](/documentation/img/coupling_schema.jpg)
+<img src="documentation/img/coupling_schema.jpg" width=500>
 
 ## Dependencies
 -   [Blender 2.79](https://www.blender.org/download/)
