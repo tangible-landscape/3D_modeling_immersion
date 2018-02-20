@@ -1,5 +1,5 @@
 # Real-time 3D modeling and immersion with Tangibles
-<img align="center" src="/documentation/img/Photo_collage.jpg" width=500>
+<span style="display:block;text-align:center"><img src="/documentation/img/Photo_collage.jpg" width=500>
 
 ## Abstract
 We have paired GRASS GIS with Blender, a state-of-the-art 3D modeling
@@ -15,7 +15,7 @@ object or creating a new 3D object are applied. The adaptation procedure applied
 depends upon the type of spatial data and is handled by a module called adapt. All
 3D elements in the scene (i.e. objects, lights, materials, and cameras) reside in a
 Blender file (modeling3D.blend).
-<img src="documentation/img/coupling_schema.jpg" width=500>
+<span style="display:block;text-align:center"><img src="documentation/img/coupling_schema.jpg" width=500>
 
 ## Dependencies
 -   [Blender 2.79](https://www.blender.org/download/)
@@ -35,7 +35,7 @@ Blender file (modeling3D.blend).
   * From the ``Import/Export panel`` deactivate ``Adjust 3D view`` and ``Force textured solid shading``.
   * Click on ``Save User Settings`` on the bottom left corner of user preferences
 #### 3. Installing and setting up Blender virtual_reality_viewport addon
-  * Install and activate VR addon (for detailed instruction see [addon installation guide](https://github.com/dfelinto/virtual_reality_viewport)
+  * Install and activate VR addon (for detailed instruction see [addon installation guide](https://github.com/dfelinto/virtual_reality_viewport))
   * Click on ``Save User Settings`` on the bottom left corner of user preferences
 #### 4. Optimizing the blender scene
 In this step we adjust system settings to optimize the viewport rendering performance.
@@ -57,7 +57,7 @@ For testing the real-time modeling you can manually copy sample geospatial data 
   * Multiple vantage points (vantage.shp)
   * 4 tree patches (patch_class1.png, patch_class2.png, patch_class3.png, patch_class2.png)
   * Trail (trail.shp)
-* Download the modeling3D.Blend from here.
+* Download the modeling3D.Blend from [here](https://mfr.osf.io/render?url=https://osf.io/dmg37/?action=download%26mode=render).
 * Open modeling3D.Blend
 * Locate Tangible landscape panel from ``Toolshelf`` and click on ``Turn on Watch mode``
 * Copy the test files in one by one starting with the terrain to the ``Watch folder``.
@@ -72,9 +72,9 @@ four camera types: human view camera linked to the tangible view marker, preset 
 to an animated orbiting bird view camera. The preset bird and human cameras
 are linked to the 3D viewport allowing users to navigate the 3D scene (with the
 mouse), adjust and revisit their preferred views.
-* ``The Rendering and realism`` panel includes buttons for selecting between Cycle and Blender Render engines, and between low-poly and realistic representations. Note : ``Low poly`` rendering is only supported in ``Cycle mode``
-
+* ``The Object properties`` section includes buttons for removing various objects, in this landscape design application it is set to remove Trees and Trail.
+* ``The Rendering and realism`` panel includes buttons for selecting between Cycle and Blender Render engines, and between low-poly and realistic representations. Note : ``Low poly`` rendering is only supported in ``Cycle mode``.
+<span style="display:block;text-align:center"><img src="documentation/img/gui.jpg" width=200>
 
 
 ### Using your own data
-![Immersive extension GUI](https://github.com/tangible-landscape/tangible-landscape-immersive-extension/blob/master/blob/blender_gui_1.PNG)
