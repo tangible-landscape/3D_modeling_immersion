@@ -25,7 +25,6 @@ Blender file (modeling3D.blend).
 -   [Blender virtual_reality_viewport addon](https://github.com/dfelinto/virtual_reality_viewport)
 
 ## Installation
-
 #### 1. Installing and setting up Tangible landscape addon in Blender
   * Open Blender ``user preferences`` (Alt + Ctrl + U) > Go to ``add-ons`` tab > ``Install from file`` (bottom center of the panel) > locate TL_addon.zip > press enter
   * Select on the addon to activate it.
