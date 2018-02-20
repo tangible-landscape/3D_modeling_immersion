@@ -26,21 +26,21 @@ Blender file (modeling3D.blend).
 
 ## Installation
 
-#### Installing and setting up Tangible landscape addon in Blender
+#### 1. Installing and setting up Tangible landscape addon in Blender
   * Open Blender ``user preferences`` (Alt + Ctrl + U) > Go to ``add-ons`` tab > ``Install from file`` (bottom center of the panel) > locate TL_addon.zip > press enter
   * Select on the addon to activate it.
   * In the ``Preferences`` tab > ``Coupling folder`` > browse and locate TL_coupling folder (e.g, D:/TL_coupling)
   * In the ``Coordinate reference system`` field type-in the 4 digit EPSG code related to your GIS dataset. The provided examples use 3358.
   * Click on ``Save User Settings`` on the bottom left corner of user preferences
-#### Installing and setting up Blender virtual_reality_viewport addon
+#### 2. Installing and setting up Blender virtual_reality_viewport addon
   * Install and activate BlenderGIS addon (for detailed instruction see [BlenderGIS wiki](https://github.com/domlysz/BlenderGIS/wiki/Install-and-usage))
   * Go to ``Preferences`` > ``BlenderGIS preferences`` > ``Spatial reference system`` > add your EPSG 4 digit code and a description  (e.g., 3358 , NAD 1983)
   * From the ``Import/Export panel`` deactivate ``Adjust 3D view`` and ``Force textured solid shading``.
   * Click on ``Save User Settings`` on the bottom left corner of user preferences
-#### Installing and setting up Blender virtual_reality_viewport addon
+#### 3. Installing and setting up Blender virtual_reality_viewport addon
   * Install and activate VR addon (for detailed instruction see [addon installation guide](https://github.com/dfelinto/virtual_reality_viewport)
   * Click on ``Save User Settings`` on the bottom left corner of user preferences
-#### Optimizing the blender scene
+#### 4. Optimizing the blender scene
 In this step we adjust system settings to optimize the viewport rendering performance.
   * In the ``Blender User Preferences`` > ``System`` :
     * In ``General`` section > adjust ``DPI``to increase/decrease icon size based on your preferences and monitor resolution.
