@@ -53,8 +53,6 @@ In this step we adjust system settings to optimize the viewport rendering perfor
     * Set ``Images Draw Method`` to GLSL
   * Click on ``Save User Settings`` on the bottom left corner of user preferences
 ## Testing
-==================================
-
 For testing the real-time modeling you can manually copy sample geospatial data from test folder to the watch folder.  
 * Inside the test folder you can find the following sample data are provided:
   * Terrain raster (terrain.tif)
