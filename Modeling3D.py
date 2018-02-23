@@ -315,7 +315,6 @@ def calcArea(obj):
 def toggleCam(camInitial, multiple=True, adaptGrass=False):
         """ assign the camera scene to the passed camera name"""
 
-        grassPlane = bpy.data.objects["grassPlane"]
 
         if multiple:
             camList = []
@@ -339,27 +338,9 @@ def toggleCam(camInitial, multiple=True, adaptGrass=False):
         else:
             Camera = bpy.data.objects[camInitial]
 
-        if adaptGrass:
-            if grassPlane.hide:
-                grassPlane.hide = False
-
-            camPosition = Camera.location
-            grassPlane.location.x = camPosition.x
-            grassPlane.location.y = camPosition.y
-            shrinkRaster2Obj("grassPlane", "terrain",
-                             method='NEAREST_SURFACEPOINT',
-                             offset=0.08, delModifier=True)
-
-        else:
-
-            if grassPlane.hide == False:
-                grassPlane.hide = True
-
         bpy.context.scene.camera = Camera
         bpy.context.scene.objects.active = Camera
         bpy.ops.view3d.object_as_camera()
-
-
 
 
 def getTime(returnType):
@@ -405,16 +386,19 @@ def makeScratchfile(fPath, fType):
 
 
 def particle(obj, specieType, count, specieSize=.6, rotation=.02,
-             rotObj="OB_Y", group=False, vertexGroup=False, particle_name="particle_setting"):
+             rotObj="OB_Y", group=False, vertexGroup=False, particle_name="particle_setting", texture=False):
     """ Get object, specie type, specie count, and specie size
     and apply particle system """
-
     selectOnly(obj)
+<<<<<<< HEAD
+=======
     # remove all previously assigned particles systems #
-    obj = bpy.data.objects[obj]
+>>>>>>> 3bfcd10fed99120242b8e1fbd8445c6b0d069e80
+    Obj = bpy.data.objects[obj]
+    bpy.context.scene.objects.active = Obj
     # Create an new particle system #
     bpy.ops.object.particle_system_add()
-    psys1 = obj.particle_systems[-1]
+    psys1 = Obj.particle_systems[-1]
     psys1.name = particle_name
     pset1 = psys1.settings
     pset1.name = 'TreePatch'
@@ -434,11 +418,13 @@ def particle(obj, specieType, count, specieSize=.6, rotation=.02,
         pset1.render_type = 'GROUP'
         pset1.dupli_group = bpy.data.groups[specieType]
         pset1.use_group_pick_random = True
-
     else:
         pset1.render_type = 'OBJECT'
         pset1.dupli_object = bpy.data.objects[specieType]
 
+    if texture:
+        Obj.particle_systems[particle_name].settings.\
+        active_texture = bpy.data.textures[texture]
 
     pset1.lifetime_random = 0.0
     pset1.emit_from = 'FACE'
@@ -591,32 +577,29 @@ class Adapt:
 
     def changeRealism(self,mode):
 
-      self.realism = mode
+        self.realism = mode
+        if self.terrain.particle_systems:
+            for particle in self.terrain.particle_systems:
+                setting = particle.settings
+                if setting.count== 1:
+                    newParticle= mode + "_" + particle.name + "_single"
+                else:
+                    newParticle = mode + "_" + particle.name
 
-      for obj in bpy.data.objects:
-            if "patch_" in obj.name:
-                if obj.particle_systems:
-                    setting= obj.particle_systems[0].settings
-                    if setting.count== 1:
-                        newParticle= mode + "_" + obj.name.split("_")[1]+ "_single"
-                    else:
-                        newParticle= mode + "_" + obj.name.split("_")[1]
+                if setting.render_type == 'GROUP':
+                    setting.dupli_group = bpy.data.groups[newParticle]
+                else:
+                    setting.dupli_object = bpy.data.objects[newParticle]
 
-                    if setting.render_type == 'GROUP':
-                        setting.dupli_group = bpy.data.groups[newParticle]
-                    else:
-                        setting.dupli_object = bpy.data.objects[newParticle]
-
-
-      if mode == "High":
+        if mode == "High":
           self.clouds.hide = True
           self.sun.hide = True
 
-      elif mode == "Low":
+        elif mode == "Low":
           self.clouds.hide = False
           self.sun.hide = False
 
-      self.changeEngine(self.engine,mode)
+        self.changeEngine(self.engine,mode)
 
     def terrainChange(self,Path, CRS):
 
@@ -650,7 +633,7 @@ class Adapt:
         except:
             print ("cannot change texture")
 
-    def waterFill(self,waterPath):
+    def waterFill(self,waterPath, CRS):
 
         if bpy.data.objects.get(self.water, CRS):
             self.scene.objects.unlink(bpy.data.objects[self.water])
@@ -782,14 +765,14 @@ class Adapt:
             print ("tree drawing failed")
 
     def treePatchFill(self, patch, watchFolder):
+        print ("received")
 
                         # import patchShapefile #
                         #try:
         patchPath = os.path.join(watchFolder, patch)
         patchType = patch.split("_")[1]
-        particleName = "particle_" + patchType
+        textureName = "particle_" + patchType
         img = bpy.data.images.load(patchPath)
-
         specieType = self.realism + "_" + patchType
 
         if patchType == "class3":
@@ -797,18 +780,20 @@ class Adapt:
         else:
             density = 500
 
-        particle(self.plane, specieType, density, group=True,
-        particle_name=patchType)
+        if textureName not in bpy.data.textures:
+            bpy.data.textures.new(textureName, type='IMAGE')
+        bpy.data.textures[textureName].image = img
             #self.terrain.particle_systems[0].name = patchType
 
-        if particleName not in bpy.data.textures:
-            bpy.data.textures.new(particleName, type='IMAGE')
+        if patchType in self.terrain.particle_systems:
+            self.terrain.particle_systems[patchType].settings.\
+            active_texture = bpy.data.textures[textureName]
+        else:
+            particle(self.plane, specieType, density, group=True,
+            particle_name=patchType, texture=textureName )
 
-        bpy.data.textures[particleName].image = img
-        self.terrain.particle_systems[patchType].settings.\
-        active_texture = bpy.data.textures[particleName]
 
-        return "imported"
+            return "imported"
 
 class ModalTimerOperator(bpy.types.Operator):
         """Operator which interatively runs from a timer"""
@@ -870,6 +855,7 @@ class ModalTimerOperator(bpy.types.Operator):
                             self.adapt.treePatchFill(fileName, self.prefs.watchFolder)
                             self.adaptMode = "PATCH"
 
+
             return {"PASS_THROUGH"}
 
         def execute(self, context):
@@ -896,6 +882,11 @@ class ModalTimerOperator(bpy.types.Operator):
             for img in bpy.data.images:
                 if "patch_" in img.name:
                     bpy.data.images.remove(img, do_unlink=True)
+
+            for i in self.terrain.modifiers:
+                if "Particle" in i.name:
+                    self.terrain.modifiers.remove(i)
+
 
             return {"RUNNING_MODAL"}
 
@@ -927,7 +918,7 @@ class HumanCam(bpy.types.Operator):
 
     def execute(self, context):
 
-        toggleCam("Human_", adaptGrass=True)
+        toggleCam("Human_", adaptGrass=False)
 
         return {'FINISHED'}
 
@@ -985,7 +976,10 @@ class Object_operators(bpy.types.Operator):
         realism = world.split(".")[1]
 
         if self.button == "TREES":
-            remove("patch")
+            for i in bpy.data.objects["terrain"].modifiers:
+                if "Particle" in i.name:
+                    bpy.data.objects["terrain"].modifiers.remove(i)
+
         elif self.button == "TRAIL":
             remove("trail")
 
@@ -1006,11 +1000,11 @@ class Engine_buttons(bpy.types.Operator):
         if self.engineButton == "BLENDER_RENDER":
 
             if realism == "High" and engine != "BLENDER_RENDER" :
-                adapt().changeEngine("BLENDER_RENDER",real=realism)
+                Adapt().changeEngine("BLENDER_RENDER",real=realism)
                 self.mode = "BLENDER_RENDER"
-                adapt().realism = realism
-                adapt().engine = "BLENDER_RENDER"
-                adapt().UpdateWorld("BLENDER_RENDER", "High")
+                Adapt().realism = realism
+                Adapt().engine = "BLENDER_RENDER"
+                Adapt().UpdateWorld("BLENDER_RENDER", "High")
 
             else:
                 bpy.ops.error.message('INVOKE_DEFAULT',
@@ -1021,17 +1015,17 @@ class Engine_buttons(bpy.types.Operator):
 
             if engine != "CYCLES":
 
-                adapt().changeEngine("CYCLES", real=realism)
-                adapt().engine= "CYCLES"
-                adapt().realism = realism
-                adapt().UpdateWorld("CYCLES", realism)
+                Adapt().changeEngine("CYCLES", real=realism)
+                Adapt().engine= "CYCLES"
+                Adapt().realism = realism
+                Adapt().UpdateWorld("CYCLES", realism)
 
         elif self.engineButton == 'Low':
 
             if engine == "CYCLES":
-                adapt().changeEngine(engine,real = 'Low')
-                adapt().changeRealism("Low")
-                adapt().UpdateWorld("CYCLES",'Low')
+                Adapt().changeEngine(engine,real = 'Low')
+                Adapt().changeRealism("Low")
+                Adapt().UpdateWorld("CYCLES",'Low')
             else:
                 bpy.ops.error.message('INVOKE_DEFAULT',
                                       type = "Error",
@@ -1039,10 +1033,10 @@ class Engine_buttons(bpy.types.Operator):
 
         elif self.engineButton == 'High':
 
-            adapt().changeEngine(engine,real = 'High')
-            adapt().changeRealism("High")
-            adapt().realism = "High"
-            adapt().UpdateWorld(engine,'High')
+            Adapt().changeEngine(engine,real = 'High')
+            Adapt().changeRealism("High")
+            Adapt().realism = "High"
+            Adapt().UpdateWorld(engine,'High')
 
         if self.engineButton == "Render":
             bpy.context.space_data.viewport_shade = 'RENDERED'
