@@ -390,20 +390,18 @@ def particle(obj, specieType, count, specieSize=.6, rotation=.02,
     """ Get object, specie type, specie count, and specie size
     and apply particle system """
     selectOnly(obj)
-<<<<<<< HEAD
-=======
-    # remove all previously assigned particles systems #
->>>>>>> 3bfcd10fed99120242b8e1fbd8445c6b0d069e80
     Obj = bpy.data.objects[obj]
     bpy.context.scene.objects.active = Obj
     # Create an new particle system #
     bpy.ops.object.particle_system_add()
     psys1 = Obj.particle_systems[-1]
     psys1.name = particle_name
+    psys1.seed = 4
     pset1 = psys1.settings
-    pset1.name = 'TreePatch'
+    pset1.name = 'Patch' + particle_name
     pset1.type = 'EMITTER'
     pset1.physics_type = 'NO'
+
     pset1.use_even_distribution = False
     pset1.use_emit_random = False
     pset1.use_rotation_dupli = False
@@ -444,6 +442,23 @@ def particle(obj, specieType, count, specieSize=.6, rotation=.02,
     pset1.size_random = .4
     pset1.rotation_mode = rotObj
 
+def particle_get(obj):
+    """Stores particle system settings of an object in a dictionary"""
+    particleDic = {}
+    bpy.context.scene.objects.active = obj
+    for i in obj.particle_systems:
+        particleDic[i.name] = i.settings.name
+        bpy.data.particles[i.settings.name].use_fake_user = True
+    return particleDic
+
+def particle_clone(particleDic, clone):
+    """assigns particle system settings retrieved from a dictionary to an object"""
+    for i in particleDic :
+        bpy.context.scene.objects.active = clone
+        bpy.ops.object.particle_system_add()
+        psys = clone.particle_systems[-1]
+        psys.name = i
+        psys.settings = bpy.data.particles[particleDic[i]]
 
 def changeMat(obj, mat, slot=1):
 
@@ -603,25 +618,37 @@ class Adapt:
 
     def terrainChange(self,Path, CRS):
 
-        try:
-            if bpy.data.objects.get(self.plane):
-                selectOnly(self.plane, delete=True)
+    #try:
+        # Check if the terrain object exist and has particles
+        if bpy.data.objects.get(self.plane):
+            if bpy.data.objects[self.plane].particle_systems:
+                particle_settings = particle_get(bpy.data.objects[self.plane])
+            else:
+                particle_settings = None
+            # Delete terrain object
+            selectOnly(self.plane, delete=True)
 
-            bpy.ops.importgis.georaster(filepath=Path, importMode="DEM",
-                                        subdivision="mesh", rastCRS=CRS)
-            selectOnly(self.plane)
-            bpy.ops.object.convert(target="MESH")
-            # smooth(self.plane, 3, 1)
-            mat = self.engine[0] + ".Grass" + "." + self.realism
-            matSide = self.engine[0] + ".Side" + "." + self.realism
-            changeMat(self.plane, mat)
-            addSide(self.plane,matSide)
 
-            makeScratchfile(Path, "raster")
+        bpy.ops.importgis.georaster(filepath=Path, importMode="DEM",
+                                    subdivision="mesh", rastCRS=CRS)
+        selectOnly(self.plane)
+        bpy.ops.object.convert(target="MESH")
+        # smooth(self.plane, 3, 1)
+        mat = self.engine[0] + ".Grass" + "." + self.realism
+        matSide = self.engine[0] + ".Side" + "." + self.realism
+        changeMat(self.plane, mat)
+        addSide(self.plane,matSide)
 
-            return "finished"
-        except:
-            print ("Train adaptation unsuccessfull")
+        # Assign the stored particle
+        if particle_settings:
+            print (particle_settings)
+            particle_clone(particle_settings, bpy.data.objects[self.plane])
+
+        makeScratchfile(Path, "raster")
+
+        return "finished"
+    #except:
+        #print ("Train adaptation unsuccessfull")
 
     def textureM(self,texturePath):
 
@@ -765,14 +792,12 @@ class Adapt:
             print ("tree drawing failed")
 
     def treePatchFill(self, patch, watchFolder):
-        print ("received")
 
-                        # import patchShapefile #
-                        #try:
         patchPath = os.path.join(watchFolder, patch)
         patchType = patch.split("_")[1]
         textureName = "particle_" + patchType
         img = bpy.data.images.load(patchPath)
+
         specieType = self.realism + "_" + patchType
 
         if patchType == "class3":
@@ -780,20 +805,18 @@ class Adapt:
         else:
             density = 500
 
+        if patchType not in self.terrain.particle_systems:
+            particle(self.plane, specieType, density, group=True,
+            particle_name=patchType)
+
         if textureName not in bpy.data.textures:
             bpy.data.textures.new(textureName, type='IMAGE')
+
         bpy.data.textures[textureName].image = img
-            #self.terrain.particle_systems[0].name = patchType
+        self.terrain.particle_systems[patchType].settings.\
+        active_texture = bpy.data.textures[textureName]
 
-        if patchType in self.terrain.particle_systems:
-            self.terrain.particle_systems[patchType].settings.\
-            active_texture = bpy.data.textures[textureName]
-        else:
-            particle(self.plane, specieType, density, group=True,
-            particle_name=patchType, texture=textureName )
-
-
-            return "imported"
+        return "imported"
 
 class ModalTimerOperator(bpy.types.Operator):
         """Operator which interatively runs from a timer"""
@@ -887,6 +910,9 @@ class ModalTimerOperator(bpy.types.Operator):
                 if "Particle" in i.name:
                     self.terrain.modifiers.remove(i)
 
+            for tex in bpy.data.textures:
+                if "class" in tex.name:
+                    bpy.data.textures.remove(tex, do_unlink=True)
 
             return {"RUNNING_MODAL"}
 
