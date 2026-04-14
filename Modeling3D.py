@@ -385,7 +385,7 @@ def makeScratchfile(fPath, fType):
         print("could not rename the {0} file").format(fPath)
 
 
-def particle(obj, specieType, count, specieSize=.6, rotation=.02,
+def particle(obj, setting = None, specieType = None, count = None, specieSize=.6, rotation=.02,
              rotObj="OB_Y", group=False, vertexGroup=False, particle_name="particle_setting", texture=False):
     """ Get object, specie type, specie count, and specie size
     and apply particle system """
@@ -396,51 +396,56 @@ def particle(obj, specieType, count, specieSize=.6, rotation=.02,
     bpy.ops.object.particle_system_add()
     psys1 = Obj.particle_systems[-1]
     psys1.name = particle_name
-    psys1.seed = 4
-    pset1 = psys1.settings
-    pset1.name = 'Patch' + particle_name
-    pset1.type = 'EMITTER'
-    pset1.physics_type = 'NO'
 
-    pset1.use_even_distribution = False
-    pset1.use_emit_random = False
-    pset1.use_rotation_dupli = False
-    pset1.use_dead = True
+    if setting:
+        psys.settings = setting
 
-    if vertexGroup:
-        bpy.context.object.particle_systems["ParticleSystem"].\
-            vertex_group_density = "Density"
-        bpy.context.object.particle_systems["ParticleSystem"].\
-            vertex_group_length = "Height"
-    if group:
-        pset1.render_type = 'GROUP'
-        pset1.dupli_group = bpy.data.groups[specieType]
-        pset1.use_group_pick_random = True
     else:
-        pset1.render_type = 'OBJECT'
-        pset1.dupli_object = bpy.data.objects[specieType]
+        psys1.seed = 4
+        pset1 = psys1.settings
+        pset1.name = 'Patch' + particle_name
+        pset1.type = 'EMITTER'
+        pset1.physics_type = 'NO'
 
-    if texture:
-        Obj.particle_systems[particle_name].settings.\
-        active_texture = bpy.data.textures[texture]
+        pset1.use_even_distribution = False
+        pset1.use_emit_random = False
+        pset1.use_rotation_dupli = False
+        pset1.use_dead = True
 
-    pset1.lifetime_random = 0.0
-    pset1.emit_from = 'FACE'
-    pset1.distribution = 'JIT'
-    pset1.count = count
-    pset1.use_render_emitter = True
+        if vertexGroup:
+            bpy.context.object.particle_systems["ParticleSystem"].\
+                vertex_group_density = "Density"
+            bpy.context.object.particle_systems["ParticleSystem"].\
+                vertex_group_length = "Height"
+        if group:
+            pset1.render_type = 'GROUP'
+            pset1.dupli_group = bpy.data.groups[specieType]
+            pset1.use_group_pick_random = True
+        else:
+            pset1.render_type = 'OBJECT'
+            pset1.dupli_object = bpy.data.objects[specieType]
 
-    pset1.userjit = 70
-    pset1.use_modifier_stack = True
-    pset1.hair_length = specieSize
+        if texture:
+            Obj.particle_systems[particle_name].settings.\
+            active_texture = bpy.data.textures[texture]
 
-    pset1.use_rotations = True
-    pset1.rotation_factor_random = rotation
+        pset1.lifetime_random = 0.0
+        pset1.emit_from = 'FACE'
+        pset1.distribution = 'JIT'
+        pset1.count = count
+        pset1.use_render_emitter = True
 
-    pset1.use_rotation_dupli = True
-    pset1.particle_size = 1
-    pset1.size_random = .4
-    pset1.rotation_mode = rotObj
+        pset1.userjit = 70
+        pset1.use_modifier_stack = True
+        pset1.hair_length = specieSize
+
+        pset1.use_rotations = True
+        pset1.rotation_factor_random = rotation
+
+        pset1.use_rotation_dupli = True
+        pset1.particle_size = 1
+        pset1.size_random = .4
+        pset1.rotation_mode = rotObj
 
 def particle_get(obj):
     """Stores particle system settings of an object in a dictionary"""
@@ -643,8 +648,8 @@ class Adapt:
         if particle_settings:
             print (particle_settings)
             particle_clone(particle_settings, bpy.data.objects[self.plane])
-
-        makeScratchfile(Path, "raster")
+        os.remove(Path)
+        # makeScratchfile(Path, "raster")
 
         return "finished"
     #except:
@@ -675,7 +680,8 @@ class Adapt:
             changeMat(self.water, mat)
 
             if (int(getTime("sec"))) % 2 == 0:
-                makeScratchfile(waterPath, "raster")
+                #makeScratchfile(waterPath, "raster")
+                os.remove(waterPath)
 
             return "imported"
         except:
@@ -703,7 +709,11 @@ class Adapt:
                             me.vertices[-1].co.y,
                             me.vertices[0].co.z+16]
             toggleCam(self.vantageCam, adaptGrass=False)
-            makeScratchfile(vantagePath, "vector")
+            #makeScratchfile(vantagePath, "vector")
+            os.remove(vantagePath)
+            os.remove(vantagePath[:-4] + ".prj")
+            os.remove(vantagePath[:-4] + ".shx")
+            os.remove(vantagePath[:-4] + ".dbf")
 
         except:
             print ("vantage not imported")
@@ -742,7 +752,12 @@ class Adapt:
                 mat = self.engine[0] + ".boardwalk"
                 changeMat(self.trail, mat)
                 smooth(self.trail, .18,2)
-                makeScratchfile(trailPath, "vector")
+                os.remove(trailPath)
+                os.remove(trailPath[:-4] + ".prj")
+                os.remove(trailPath[:-4] + ".shx")
+                os.remove(trailPath[:-4] + ".dbf")
+
+                #makeScratchfile(trailPath, "vector")
 
                 return "imported"
         except:
@@ -797,7 +812,6 @@ class Adapt:
         patchType = patch.split("_")[1]
         textureName = "particle_" + patchType
         img = bpy.data.images.load(patchPath)
-
         specieType = self.realism + "_" + patchType
 
         if patchType == "class3":
@@ -805,9 +819,14 @@ class Adapt:
         else:
             density = 500
 
+
         if patchType not in self.terrain.particle_systems:
-            particle(self.plane, specieType, density, group=True,
-            particle_name=patchType)
+            if patchType not in bpy.data.particles:
+                particle(self.plane, specieType = specieType, count = density, group=True,
+                particle_name=patchType)
+
+            else:
+                particle(self.plane, setting = pathType)
 
         if textureName not in bpy.data.textures:
             bpy.data.textures.new(textureName, type='IMAGE')
@@ -861,7 +880,8 @@ class ModalTimerOperator(bpy.types.Operator):
                                 for i in self.terrain.modifiers:
                                     if "Particle" in i.name:
                                         self.terrain.modifiers.remove(i)
-                        makeScratchfile(self.prefs.emptyPath, "text")
+                        os.remove(self.prefs.emptyPath)
+                        #makeScratchfile(self.prefs.emptyPath, "text")
 
                     if vantageFile in fileList:
                         self.adapt.vantageShp(self.prefs.vantagePath, self.prefs.CRS)
@@ -902,17 +922,17 @@ class ModalTimerOperator(bpy.types.Operator):
                 except:
                     print("Could not remove file")
 
-            for img in bpy.data.images:
-                if "patch_" in img.name:
-                    bpy.data.images.remove(img, do_unlink=True)
+            #for img in bpy.data.images:
+                #if "patch_" in img.name:
+                    #bpy.data.images.remove(img, do_unlink=True)
 
-            for i in self.terrain.modifiers:
-                if "Particle" in i.name:
-                    self.terrain.modifiers.remove(i)
+            #for i in self.terrain.modifiers:
+                #if "Particle" in i.name:
+                    #self.terrain.modifiers.remove(i)
 
-            for tex in bpy.data.textures:
-                if "class" in tex.name:
-                    bpy.data.textures.remove(tex, do_unlink=True)
+            #for tex in bpy.data.textures:
+                #if "class" in tex.name:
+                    #bpy.data.textures.remove(tex, do_unlink=True)
 
             return {"RUNNING_MODAL"}
 
